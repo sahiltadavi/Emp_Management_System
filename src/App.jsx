@@ -1,213 +1,205 @@
+import { useState } from 'react';
+import './App.css';
 
-import React, { useState } from "react";
-import './App.css'
-
-
-const validateEmployee = (employee) => {
-  const errors = {};
-  if (!employee.name || employee.name.length < 3 || employee.name.length > 50 || !/^[A-Za-z ]+$/.test(employee.name)) {
-    errors.name = "Name is required, and should be between 3-50 characters with alphabets and spaces only.";
-  }
-  if (!employee.dob || new Date(employee.dob) >= new Date()) {
-    errors.dob = "DOB is required and must be a past date.";
-  }
-  if (!employee.contact || !/^\d{10}$/.test(employee.contact)) {
-    errors.contact = "Contact is required and must be exactly 10 digits.";
-  }
-  if (!employee.email || !/\S+@\S+\.\S+/.test(employee.email)) {
-    errors.email = "Email is required and must be in a valid format.";
-  }
-  if (!employee.address) {
-    errors.address = "Address is required.";
-  }
-  if (!employee.department) {
-    errors.department = "Department is required.";
-  }
-  if (!employee.designation) {
-    errors.designation = "Designation is required.";
-  }
-  if (!employee.salary || isNaN(employee.salary) || parseFloat(employee.salary) <= 0) {
-    errors.salary = "Salary is required and must be a positive number.";
-  }
-  return errors;
-};
-
-const App = () => {
+function App() {
   const [employees, setEmployees] = useState([]);
-  const [employeeForm, setEmployeeForm] = useState({
-    name: "",
-    dob: "",
-    contact: "",
-    email: "",
-    address: "",
-    department: "",
-    designation: "",
-    salary: "",
+  const [form, setForm] = useState({
+    name: '',
+    dob: '',
+    contact: '',
+    email: '',
+    address: '',
+    department: '',
+    designation: '',
+    salary: '',
   });
-  const [errors, setErrors] = useState({});
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
+  const [editingIndex, setEditingIndex] = useState(null);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setEmployeeForm({ ...employeeForm, [name]: value });
-  };
-
-  const handleSearch = (e) => {
-    setSearch(e.target.value);
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const validationErrors = validateEmployee(employeeForm);
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-    } else {
-      setEmployees([...employees, employeeForm]);
-      setEmployeeForm({
-        name: "",
-        dob: "",
-        contact: "",
-        email: "",
-        address: "",
-        department: "",
-        designation: "",
-        salary: "",
-      });
-      setErrors({});
+  const validateForm = () => {
+    const errors = [];
+    if (!form.name || form.name.length < 3 || form.name.length > 50 || !/^[A-Za-z ]+$/.test(form.name)) {
+      errors.push('Name must be 3-50 characters long and only contain alphabets and spaces.');
     }
+    const dobDate = new Date(form.dob);
+    if (!form.dob || dobDate >= new Date()) {
+      errors.push('DOB must be a valid past date.');
+    }
+    if (!form.contact || !/^\d{10}$/.test(form.contact)) {
+      errors.push('Contact must be exactly 10 digits.');
+    }
+    if (!form.email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email)) {
+      errors.push('Email must be valid.');
+    }
+    if (!form.address) {
+      errors.push('Address is required.');
+    }
+    if (!form.department) {
+      errors.push('Department is required.');
+    }
+    if (!form.designation) {
+      errors.push('Designation is required.');
+    }
+    if (!form.salary || isNaN(form.salary) || Number(form.salary) <= 0) {
+      errors.push('Salary must be a positive number.');
+    }
+    if (errors.length) {
+      alert(errors.join('\n'));
+      return false;
+    }
+    return true;
+  };
+
+  const handleInputChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    if (editingIndex !== null) {
+      const updatedEmployees = [...employees];
+      updatedEmployees[editingIndex] = form;
+      setEmployees(updatedEmployees);
+      setEditingIndex(null);
+    } else {
+      setEmployees([...employees, form]);
+    }
+    setForm({ name: '', dob: '', contact: '', email: '', address: '', department: '', designation: '', salary: '' });
   };
 
   const handleEdit = (index) => {
-    setEmployeeForm(employees[index]);
-    setEmployees(employees.filter((_, i) => i !== index));
+    setForm(employees[index]);
+    setEditingIndex(index);
   };
 
   const handleDelete = (index) => {
-    setEmployees(employees.filter((_, i) => i !== index));
+    if (window.confirm('Are you sure you want to delete this employee?')) {
+      setEmployees(employees.filter((_, i) => i !== index));
+    }
   };
 
-  const filteredEmployees = employees.filter((emp) =>
-    emp.name.toLowerCase().includes(search.toLowerCase())
+  const filteredEmployees = employees.filter((employee) =>
+    employee.name.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
-    <div>
-      <h1 className="Heading">Employee Management System</h1>
-      <input
-        type="text"
-        placeholder="Search by name"
-        value={search}
-        onChange={handleSearch}
-      />
-      <form onSubmit={handleSubmit} className="form">
-        <div>
-          <label>Name</label>
+    <>
+      <div className="App">
+        <h1 className='Heading'>Employee Management System</h1>
+
+        <form onSubmit={handleFormSubmit}>
           <input
             type="text"
             name="name"
-            value={employeeForm.name}
-            onChange={handleChange}
+            value={form.name}
+            placeholder="Name"
+            onChange={handleInputChange}
           />
-          {errors.name && <div style={{ color: "red" }}>{errors.name}</div>}
-        </div>
-        <div>
-          <label>DOB</label>
+
+          <br />
           <input
             type="date"
             name="dob"
-            value={employeeForm.dob}
-            onChange={handleChange}
+            value={form.dob}
+            placeholder="Date of Birth"
+            onChange={handleInputChange}
           />
-          {errors.dob && <div style={{ color: "red" }}>{errors.dob}</div>}
-        </div>
-        <div>
-          <label>Contact</label>
+          <br />
           <input
             type="text"
             name="contact"
-            value={employeeForm.contact}
-            onChange={handleChange}
+            value={form.contact}
+            placeholder="Contact"
+            onChange={handleInputChange}
           />
-          {errors.contact && <div style={{ color: "red" }}>{errors.contact}</div>}
-        </div>
-        <div>
-          <label>Email</label>
+          <br />
           <input
             type="email"
             name="email"
-            value={employeeForm.email}
-            onChange={handleChange}
+            value={form.email}
+            placeholder="Email"
+            onChange={handleInputChange}
           />
-          {errors.email && <div style={{ color: "red" }}>{errors.email}</div>}
-        </div>
-        <div>
-          <label>Address</label>
-          <input
-            type="text"
+          <br />
+          <textarea
             name="address"
-            value={employeeForm.address}
-            onChange={handleChange}
-          />
-          {errors.address && <div style={{ color: "red" }}>{errors.address}</div>}
-        </div>
-        <div>
-          <label>Department</label>
+            value={form.address}
+            placeholder="Address"
+            onChange={handleInputChange}
+          ></textarea>
+          <br />
           <input
             type="text"
             name="department"
-            value={employeeForm.department}
-            onChange={handleChange}
+            value={form.department}
+            placeholder="Department"
+            onChange={handleInputChange}
           />
-          {errors.department && (
-            <div style={{ color: "red" }}>{errors.department}</div>
-          )}
-        </div>
-        <div>
-          <label>Designation</label>
+          <br />
           <input
             type="text"
             name="designation"
-            value={employeeForm.designation}
-            onChange={handleChange}
+            value={form.designation}
+            placeholder="Designation"
+            onChange={handleInputChange}
           />
-          {errors.designation && (
-            <div style={{ color: "red" }}>{errors.designation}</div>
-          )}
-        </div>
-        <div>
-          <label>Salary</label>
+          <br />
           <input
             type="number"
             name="salary"
-            value={employeeForm.salary}
-            onChange={handleChange}
+            value={form.salary}
+            placeholder="Salary"
+            onChange={handleInputChange}
           />
-          {errors.salary && <div style={{ color: "red" }}>{errors.salary}</div>}
-        </div>
-        <button type="submit">Save Employee</button>
-      </form>
+          <br />
+          <button type="submit" className='sub'>{editingIndex !== null ? 'Update' : 'Add'} Employee</button>
+        </form>
 
-      <h2>Employee List</h2>
-      <ul>
-        {filteredEmployees.map((emp, index) => (
-          <li key={index}>
-            <div>
-              <p>Name: {emp.name}</p>
-              <p>DOB: {emp.dob}</p>
-              <p>Contact: {emp.contact}</p>
-              <p>Email: {emp.email}</p>
-              <p>Address: {emp.address}</p>
-              <p>Department: {emp.department}</p>
-              <p>Designation: {emp.designation}</p>
-              <p>Salary: {emp.salary}</p>
-              <button onClick={() => handleEdit(index)}>Edit</button>
-              <button onClick={() => handleDelete(index)}>Delete</button>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
+        <input
+          type="text"
+          value={search}
+          placeholder="Just Enter a name to Search..."
+          onChange={(e) => setSearch(e.target.value)}
+          className='sear'
+        />
+        <table border={''}>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>DOB</th>
+              <th>Contact</th>
+              <th>Email</th>
+              <th>Address</th>
+              <th>Department</th>
+              <th>Designation</th>
+              <th>Salary</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredEmployees.map((employee, index) => (
+              <tr key={index}>
+                <td>{employee.name}</td>
+                <td>{employee.dob}</td>
+                <td>{employee.contact}</td>
+                <td>{employee.email}</td>
+                <td>{employee.address}</td>
+                <td>{employee.department}</td>
+                <td>{employee.designation}</td>
+                <td>{employee.salary}</td>
+                <td>
+                  <button onClick={() => handleEdit(index)}>Edit</button>
+                  <button onClick={() => handleDelete(index)}>Delete</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
-};
+}
 
 export default App;
