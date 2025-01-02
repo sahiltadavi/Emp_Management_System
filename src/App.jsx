@@ -1,7 +1,8 @@
-// src/App.js
-import React, { useState } from "react";
 
-// Helper function to validate employee details
+import React, { useState } from "react";
+import './App.css'
+
+
 const validateEmployee = (employee) => {
   const errors = {};
   if (!employee.name || employee.name.length < 3 || employee.name.length > 50 || !/^[A-Za-z ]+$/.test(employee.name)) {
@@ -91,14 +92,14 @@ const App = () => {
 
   return (
     <div>
-      <h1>Employee Management</h1>
+      <h1 className="Heading">Employee Management System</h1>
       <input
         type="text"
         placeholder="Search by name"
         value={search}
         onChange={handleSearch}
       />
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="form">
         <div>
           <label>Name</label>
           <input
